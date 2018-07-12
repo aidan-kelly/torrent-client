@@ -27,7 +27,8 @@ fs = open(metainfofile, 'rb')
 torrentData = bencode.decode(fs.read())
 
 #print out the announce link
-print(torrentData.get("announce"))
+announceLink = torrentData.get("announce")
+print(announceLink)
 
 #grabs the info dictionary, encodes it and then hashes it. We convert the hash object to a string.
 decodedInfo = torrentData.get("info")
@@ -35,13 +36,30 @@ bencodedInfo = bencode.encode(decodedInfo)
 infoSHA1 = hashlib.sha1(bencodedInfo)
 
 #not sure if i need to decode the infoSHA1.digest()
-infoSHA1String = infoSHA1.digest()
+infoSHA1String = infoSHA1.hexdigest()
 
 #URL encode the hash.
 urlEncodedInfo = urllib.parse.quote_plus(infoSHA1String)
 
-print(infoSHA1String)
-print(urlEncodedInfo)
+#print(torrentData)
+#print(infoSHA1String)
+#print(urlEncodedInfo)
 
-#future params for the HTTP get method.
-getRequestParams = {}
+totalSize = 0
+infoNeeded = torrentData.get("info").get("files")
+
+for x in infoNeeded:
+    totalSize = totalSize + x.get("length")
+
+getRequestParams = {'info_hash':urlEncodedInfo, 'peer_id':"AK", 'port':'6882','downloaded':'0','left':totalSize,'ip':'174.0.246.173','uploaded':'0','event':'started'}
+
+requestParams = urllib.parse.urlencode(getRequestParams)
+
+finalLink = announceLink + "?" + requestParams
+
+print(finalLink)
+
+r = requests.get(finalLink)
+
+
+print(r.text)
